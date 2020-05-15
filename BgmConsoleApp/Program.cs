@@ -30,10 +30,10 @@ namespace BgmConsoleApp
         static int[] storemen;
         static int[] hitman;
         static int[] allmoves;
-             //  int hit;
+        static int hit;
         static int[] noofmen;
         static int turnnumber;
-            //   int bestscore;
+        static int bestscore;
             //   int availablemove;
             //   int noofpointsread;
         static int[] pointsread;
@@ -44,7 +44,7 @@ namespace BgmConsoleApp
           //     int charr;
          static int starter;
           //     int nonstarter;
-           //    int nooflegal;
+         static int nooflegal;
           //     int ophomepoints;
           //     int* valofhit;
           //     int* valofpoint;
@@ -348,7 +348,7 @@ namespace BgmConsoleApp
             for (i = 1; i <= 2; i++) { men[i] = 24; }
             for (i = 3; i <= 7; i++) { men[i] = 13; }
             for (i = 8; i <= 10; i++) { men[i] = 8; }
-            for (i = 1; i <= 15; i++) { men[i] = 6; }
+            for (i = 11; i <= 15; i++) { men[i] = 6; }
             noofmen[player] = 15;
         }
 
@@ -403,7 +403,7 @@ namespace BgmConsoleApp
                     typeofgame[i] = 1;
                 }
                 human[WHITE] = TRUE;
-                human[BLACK] = FALSE;
+                human[BLACK] = TRUE;
                 /*      if (sigma) sigma_drawpieces(board);       **/
                 turnnumber = 0;
 
@@ -528,33 +528,33 @@ Out:            if (result == 0)
             }
             if (player == starter) turnnumber++;
 
-      /*     setup(player);*/
+            setup(player);
             writedice(player, dice1, dice2);
             if (player == WHITE && !fast)
             {       drawboard(board);
                 if (!terse) writedice(player, dice1, dice2);
             }
 
-          /*  if (human[player])
+            if (human[player] == TRUE)
             {    movetype = 3;
                  allposs(player, dice1, dice2);
-                 if (nooflegal >> 1)
+                 if (nooflegal > 1)
                  {    if (fast) drawboard(board);
                   do
-                  {    if (!inputmove(player, dice1, dice2))*/
+                  {    //if (!inputmove(player, dice1, dice2))
                         return false;
-                /*       if (movetype == 3) goto A;
-                       allposs(player, dice1, dice2);
-                       if (nooflegal == 0) printf("\nImpossible move.\n");
-                       if (nooflegal >> 1) printf("\nAmbiguous move.\n");
-                       if (nooflegal != 1) writedice(player, dice1, dice2);
+                /*       if (movetype == 3) goto A;*/
+                //       allposs(player, dice1, dice2);
+                //       if (nooflegal == 0) Console.Write("\nImpossible move.\n");
+                //       if (nooflegal > 1) Console.Write("\nAmbiguous move.\n");
+                //       if (nooflegal != 1) writedice(player, dice1, dice2);
                   }
                   while (nooflegal != 1);
                  }
             }
             else
             {    allposs(player, dice1, dice2); }
-
+            /*
             if (nooflegal >> 0)
             {    if (dice1 != dice2)
                  {     makemove(player, allmoves[1], allmoves[2]);
@@ -591,8 +591,330 @@ Out:            if (result == 0)
                     opmen[man] = 25-i;
                 }
             }*/
-           // return true;
+            return true;
         }
+
+        /* ***********************************************************************
+   ALLPOSS IS THE FIRST ROUTINE CALLED IN TURN FOR THE PURPOSE OF
+   GENERATING ALL THE POSSIBLE PLAYS WITH A DICE THROW OF <DICE1>,<DICE2>.
+   IF <DICE1> ~= <DICE2> IT CALLS MOVEDIFF AND IF THERE IS NO LEGAL TWO
+   MOVE PLAY IT LOOKS FOR A LEGAL ONE MOVE PLAY USING THE HIGHER DICE;
+   IF THIS IS UNSUCCESSFUL, ALLPOSS LOOKS FOR ONE USING THE LOWER DICE.
+   IF <DICE1> = <DICE2>, MOVEDOUBLE IS CALLED AND AS MANY MOVES AS
+   POSSIBLE UP TO 4 ARE FOUND IN ALL POSSIBLE WAYS.
+************************************************************************ */
+
+        static void allposs(int player, int dice1, int dice2)
+        {
+            int i, j, k, ss, tt, plays = 4;
+            int outertable = 0;
+
+            for (i = 1; i <= 4; i++)
+            { storemen[i] = 0; }
+
+            nooflegal = 0;
+            movefound = FALSE;
+            bestscore = -32767;
+
+            if (dice1 != dice2)
+            {
+
+                movediff(player, dice1, dice2, TRUE);
+
+                for (j = 7; j <= 12; j++)
+                { if (board[j] > 0) outertable += board[j]; }
+                k = TRUE;
+                for (i = 13; i <= 24; i++)
+                { if (board[i] > 0) k = FALSE; }
+                ss = (board[25] == 1 || (outertable < 2 && k == TRUE)) ? TRUE : FALSE;
+
+                movediff(player, dice2, dice1, ss);
+
+                if (movefound == FALSE)
+                {
+                    if (dice1 > dice2)
+                    {
+                        ss = dice1;
+                        tt = dice2;
+                    }
+                    else
+                    {
+                        ss = dice2;
+                        tt = dice1;
+                    }
+                    for (i = 1; i <= 15; i++)
+                    {
+                        if (men[i] != men[i - 1] && legalmove(ss, men[i]) == FALSE)
+                            singlemove(ss, i, player);
+                    }
+                    if (movefound == FALSE)
+                    {
+                        for (i = 1; i <= 15; i++)
+                        {
+                            if (men[i] != men[i - 1] && legalmove(tt, men[i]) == 0)
+                                singlemove(tt, i, player);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                movedouble(player, 0, dice1, 25, 4);
+                while (movefound == FALSE && (plays > 1))
+                {
+                    plays--;
+                    movedouble(player, 0, dice1, 25, plays);
+                }
+            }
+        }
+
+        /* **********************************************************************
+   MOVEDIFF IS CALLED FROM ALLPOSS.  IT GENERATES ALL THE POSSIBLE
+   PLAYS WHICH CAN BE MADE BY MOVING A MAN BY <THROW1> AND THEN SOME
+   MAN BY <THROW2> (THESE MEN MAY BE THE SAME).  WHENEVER A LEGAL
+   MOVE IS FOUND THE DETAILS ARE STORED IN ALLMOVES BY CALLING PACKMOVE.
+   THE BOARD IS REPLACED AFTERWARDS.
+********************************************************************** */
+
+        static void movediff(int player, int throw1, int throw2, int moveall)
+        {
+            int i, j;
+
+            for (i = 1; i <= 15; i++)
+            {
+                if (men[i] != men[i - 1] && legalmove(throw1, men[i]) == 0)
+                {
+                    storemove[1] = men[i];
+                    storemen[1] = i;
+                    move(player, throw1, i);
+                    hitman[1] = hit;
+                    for (j = 1; j <= 15; j++)
+                    {
+                        if (men[j] != men[j - 1] && legalmove(throw2, men[j]) == 0)
+                        {
+                            if (i == j || moveall == TRUE)
+                            {
+                                storemove[2] = men[j];
+                                storemen[2] = j;
+                                move(player, throw2, j);
+                                hitman[2] = hit;
+                                examinemove(throw1, i, throw2, j, player);
+                                replaceman(2, throw2);
+                            }
+                        }
+                    }
+                    replaceman(1, throw1);
+                }
+            }
+        }
+
+        /* **********************************************************************
+   LEGALMOVE TESTS WHETHER A SINGLE (ONE DICE) MOVE OF THROW FROM
+   A GIVEN POSITION (ON THE BOARD OR ON THE BAR) IS  LEGAL.
+   THE RESULT IS 0 IF MOVE IS LEGAL. IF ~ THE FOLLOWING ERRORS CAN OCCUR:
+
+   ATTEMPT TO MOVE PIECE WITH MAN ON BAR              -  ERROR 8
+   ATTEMPT TO MOVE WHEN OPPONENT HOLDS LANDING POINT  -  ERROR 4
+   ATTEMPT TO ILLEGALLY BEAR OFF                      -  ERROR 2
+   NO MAN AT <POSITION>                               -  ERROR 1
+
+  THESE ARE SUMMED IF THERE IS MORE THAN ONE TYPE OF ERROR.
+********************************************************************** */
+
+        static int legalmove(int dicethrow, int position)
+        {
+            int offbar = 0;
+            int clear = 4;
+            int bearoff = 0;
+            int i, j;
+
+            if (board[25] > 0 && position != 25) offbar = 8;
+
+            if (position <= dicethrow)
+            {
+                j = dicethrow;
+                if (position == dicethrow) j = 7;
+                for (i = j; i <= 25 /* position + 1 */; i++)
+                { if (board[i] > 0) bearoff = 2; }
+                if (position > 0 && dicethrow < 7) clear = 0;
+            }
+            else
+            if (board[position - dicethrow] > -2) clear = 0;
+
+            j = offbar + clear + bearoff;
+            if (board[position] <= 0) j++;
+
+            return j;
+        }
+
+        /* **********************************************************************
+   SINGLEMOVE IS CALLED FROM ALLPOSS IF MOVEDIFF HAS FOUND NO
+   LEGAL PLAY.  IT CALLS EXAMINEMOVE TO ANALYSE THE POSITION AFTER A ONE-
+   MOVE PLAY, AFTERWARDS REPLACING THE MAN MOVED.
+********************************************************************** */
+
+        static void singlemove(int dicethrow, int man, int player)
+        {
+            storemove[1] = men[man];
+            storemen[1] = man;
+            move(player, dicethrow, man);
+            hitman[1] = hit;
+            examinemove(dicethrow, man, 0, 0, player);
+            replaceman(1, dicethrow);
+        }
+
+
+        /* **********************************************************************
+           MOVEDOUBLE IS A RECURSIVE ROUTINE WHICH FINDS ALL THE POSSIBLE
+           PLAYS WHEN A DOUBLE IS THROWN.  THERE ARE 5 PARAMETERS:
+               <PLAYER>  = BLACK OR WHITE
+               <MOVES>  IS THE NUMBER OF MOVES ALREADY MADE BEFORE CALLING MOVEDOUBLE
+               <THROW>  IS THE NUMBER ON BOTH DICE
+               <START>  IS THE POSITION ON THE BOARD FROM WHICH MOVES ARE LOOKED FOR
+               <MAX>    IS THE NUMBER OF MOVES SOUGHT
+
+          THE FIRST CALL OF MOVEDOUBLE FOR EACH TURN HAS <MOVES> = 0,
+          <START> = 25 (= ON BAR), <MAX> = 4.  WHEN A LEGAL MOVE IS FOUND, "MOVE"
+          IS CALLED, WITH DETAILS BEING STORED IN THE ARRAYS STOREMEN,HITMAN AND
+          STOREMOVE.  THEN MOVEDOUBLE IS CALLED WITH <START> AND <MOVES> ALTERED.
+          WHEN FOUR MOVES HAVE BEEN MADE EXAMINEMOVE IS CALLED TO TEST THE
+          COMPLETE PLAY BY COMPARING THE POSITION WITH THOSE ALREADY REACHED BY
+          PREVIOUS POSSIBLE PLAYS.  IF NO 4 MOVE PLAY IS FOUND, 3 MOVE PLAYS ARE
+          LOOKED FOR AND SO ON UNTIL A FORCED PLAY (OR NO PLAY) IS FOUND.
+        ********************************************************************** */
+
+        static void movedouble(int player, int moves, int dicethrow, int start, int max)
+        {
+            int man, posn;
+
+            if (moves < max)
+            {
+                for (posn = start; posn >= 1; posn--)
+                {
+                    if (legalmove(dicethrow, posn) == 0)
+                    {
+                        storemove[moves + 1] = posn;
+                        man = 16;
+                        do
+                        { man--; }
+                        while (men[man] == posn);
+                        storemen[moves + 1] = man;
+                        hitman[moves + 1] = ((posn > dicethrow) &&
+                                     (board[posn - dicethrow] == -1)) ? TRUE : FALSE;
+                        move(player, dicethrow, man);
+                        movedouble(player, moves + 1, dicethrow, posn, max);
+                    }
+                }
+            }
+            else
+            {
+                examinemove(storemen[1], storemen[2], storemen[3],
+                           storemen[4], player);
+            }
+            if (moves > 0)
+            {
+                replaceman(moves, dicethrow);
+            }
+        }
+
+        /* ******************************************************************
+  EXAMINEMOVE CALLS POSNEVALUATE AND REJECTS THE  PLAY IF IT IS
+  NO BETTER THAN THE BEST SO FAR.  IF IT IS BETTER IT THROWS AWAY ALL
+  PREVIOUSLY KEPT PLAYS.
+  **************************************************************** */
+
+        static void examinemove(int a, int b, int c, int d, int player)
+        {
+            int score;
+            movefound = TRUE;
+
+            if (human[player] == TRUE)
+            {
+                Console.WriteLine($"EX {a} {b} {c} {d}, Movetype={movetype}\n");
+                /* REMOVE THIS LINE AFTER DEBUGGING */
+                if ((movetype == 1 && equal(board, opboard, 25) == TRUE)
+                   || (movetype == 2 && board[makingpoint] > 1)
+                   || (movetype == 3))
+                {
+                    Console.WriteLine("accepted\n"); /* ANOTHER DEBUG FEATURE */
+                    if (nooflegal == 0 || equal(board, opboard, 25) == FALSE)
+                    {
+                        nooflegal++;
+                        Console.WriteLine($"Noof={nooflegal}\n", nooflegal);
+                        copy(opboard, board, 25);
+                    }
+                }
+                else return;
+            }
+            else
+            {
+                score = 0; //  posnevaluate(player);
+                nooflegal = 1;
+                Console.WriteLine("\nEx %d %d %d %d %d %d", a, b, c, d, gametype, score);
+                if (score <= bestscore) return;
+                typeofgame[player] = gametype;
+                bestscore = score;
+            }
+            allmoves[1] = a;
+            allmoves[2] = b;
+            allmoves[3] = c;
+            allmoves[4] = d;
+        }
+
+        /* **********************************************************************
+   MOVE IS USED TO CHANGE THE VALUE OF MEN!MAN AND UPDATE BOARD.  IT IS
+   ALSO CALLED IN MOVEDIFF (BEFORE THE ACTUAL MOVE HAS BEEN CHOSEN) SO THE
+   POSITION AND MAN HAVE TO BE TEMPORARILY STORED ELSEWHERE BEFORE
+   THIS HAS BEEN DONE.  IT ALSO SETS HIT TO TRUE WHEN THE MAN MOVED
+   LANDS ON AN OPPONENT'S BLOT.
+********************************************************************** */
+
+        static void move(int player, int dicethrow, int man)
+        {
+            int position = men[man];
+            int hit = FALSE;
+
+            if (dicethrow > 0)
+            {
+                board[position]--;
+                if (position > dicethrow)
+                {
+                    if (board[position-dicethrow] == -1)
+                    {
+                        board[0]--;
+                        board[position - dicethrow] = 0;
+                        hit = TRUE;
+                    }
+                    board[position - dicethrow]++;
+                    men[man] -= dicethrow;
+                }
+                else
+                { men[man] = -1; }
+            }
+        }
+
+        /* **********************************************************************
+           REPLACEMAN IS USED TO CANCEL THE EFFECT OF A MOVE.  IT IS CALLED
+           AFTER THE POSITION HAS BEEN EVALUATED IN MOVEDIFF AND MOVEDOUBLE.
+        ********************************************************************** */
+
+        static void replaceman(int moves, int dicethrow)
+        {
+            int place = storemove[moves];
+
+            board[place]++;
+
+            if (place > dicethrow) board[place - dicethrow]--;
+            if (hitman[moves] == TRUE)
+            {
+                board[place - dicethrow] = -1;
+                board[0]++;
+            }
+            men[storemen[moves]] = place;
+        }
+
+
+
 
         static void writedice(int player, int dice1, int dice2)
         {
@@ -699,6 +1021,23 @@ Out:            if (result == 0)
             return a.Equals(b);
         }
 
+        static int equal(int[] a, int[] b, int n)
+        {
+            int i;
+            for (i = 0; i <= n; i++)
+            { if (a[i] != b[i]) return FALSE; }
+
+            return TRUE;
+        }
+
+        static void copy(int[] a, int[] b, int n)
+        {
+            int i;
+            for (i = 0; i <= n; i++)
+            { a[i] = b[i]; }
+        }
+
+
         static void skipline()
         {
             while (terminator != '\n')
@@ -718,6 +1057,10 @@ Out:            if (result == 0)
         {
             return Console.ReadLine();
         }
+
+        #region algorithmic bits
+
+        #endregion
     }
 }
 
