@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace BgmConsoleApp
 {
@@ -541,43 +543,44 @@ Out:            if (result == 0)
                  if (nooflegal > 1)
                  {    if (fast) drawboard(board);
                   do
-                  {    //if (!inputmove(player, dice1, dice2))
-                        return false;
-                /*       if (movetype == 3) goto A;*/
-                //       allposs(player, dice1, dice2);
-                //       if (nooflegal == 0) Console.Write("\nImpossible move.\n");
-                //       if (nooflegal > 1) Console.Write("\nAmbiguous move.\n");
-                //       if (nooflegal != 1) writedice(player, dice1, dice2);
+                  {    if (!(inputmove(player, dice1, dice2)==TRUE))
+                            return false;
+                 //      if (movetype == 3) goto A;*/
+                         allposs(player, dice1, dice2);
+                         if (nooflegal == 0) Console.Write("\nImpossible move.\n");
+                         if (nooflegal > 1) Console.Write("\nAmbiguous move.\n");
+                         if (nooflegal != 1) writedice(player, dice1, dice2);
                   }
                   while (nooflegal != 1);
                  }
             }
             else
             {    allposs(player, dice1, dice2); }
-            /*
-            if (nooflegal >> 0)
+            
+            if (nooflegal > 0)
             {    if (dice1 != dice2)
-                 {     makemove(player, allmoves[1], allmoves[2]);
-        makemove(player, allmoves[3], allmoves[4]);
+                 {
+                    makemove(player, allmoves[1], allmoves[2]);
+                    makemove(player, allmoves[3], allmoves[4]);
                  }
                  else
                  {     for (i=1; i<=4; i++)
                    {     makemove(player, dice1, allmoves[i]); }
                  }
-                 if (!human[player]) printf("\nCurrent value = %d", bestscore);
+                 if (!(human[player] == TRUE)) Console.WriteLine("\nCurrent value = %d", bestscore);
             }
             else
-            {    if (player == WHITE) printf("\n O");
-                 if (player == BLACK) printf("\n X");
-        printf(" cannot move.\n");
+            {    if (player == WHITE) Console.WriteLine("\n O");
+                 if (player == BLACK) Console.WriteLine("\n X");
+                Console.WriteLine(" cannot move.\n");
             }
 
-        A:      printf("");
-            if (!human[player])
+        A: Console.WriteLine("");
+            if (!(human[player] == TRUE))
             {       i = typeofgame[player];
                 if (i != typeofgame[player + 2])
-                {       for (j=1; j<=30; j++) printf("%s", list[j][i]);
-        printf("\n");
+                {       for (j=1; j<=30; j++) Console.WriteLine("%s", list[j][i]);
+                    Console.WriteLine("\n");
         typeofgame[player + 2] = i;
                 }
             }
@@ -590,8 +593,65 @@ Out:            if (result == 0)
                 {       man++;
                     opmen[man] = 25-i;
                 }
-            }*/
+            }
             return true;
+        }
+
+        /* **********************************************************************
+   MAKEMOVE IS USED TO WRITE AND MAKE A MOVE, BEING CALLED FROM
+   TURN AND INTTURN.  THE ORDER OF OPERATION IS CHOSEN BECAUSE HIT IS
+   ONLY SET UP CORRECTLY IN THE ROUTINE 'MOVE'.
+********************************************************************** */
+
+        static void makemove(int player, int dicethrow, int man)
+        {
+            if (man > 0)
+            {
+                writemove(player, dicethrow, men[man]);
+                move(player, dicethrow, man);
+                if (hit == TRUE)
+                { Console.Write("hit"); }
+                else
+                { Console.Write("   "); }
+            }
+        }
+
+        /* **********************************************************************
+    WRITEMOVE CALLS WRITESQUARE TO RECORD A MOVE.  IT ALSO REDUCES
+    NOOFMEN IF A MAN IS BORNE OFF (THIS IS ~ DONE IN THE ROUTINE "MOVE"
+    SINCE NOOFMEN WOULD THEN HAVE TO BE INCREMENTED IN THE
+    ROUTINE "REPLACEMAN".
+********************************************************************** */
+
+        static void writemove(int player, int dicethrow, int initsquare)
+        {
+            writesquare(player, initsquare);
+            Console.Write(" - ");
+            writesquare(player, initsquare - dicethrow);
+            /*   if (sigma) sigma_changeboard(player, throw, initsquare);    */
+            if (initsquare <= dicethrow) noofmen[player]--;
+        }
+
+        /* **********************************************************************
+   WRITESQUARE CONVERTS THE NUMBER OF A SQUARE SO THAT THIS MAY BE
+   RECORDED IN NORMAL NOTATION.  THE VALUE 25 REPRESENTS BEING ON THE
+   BAR AND ZERO OR NEGATIVE VALUES REPRESENT HAVING BEEN BORNE OFF.
+// ******************************************************************* */
+
+        static void writesquare(int player, int square)
+        {
+            int boardsquare;
+
+            if (square > 24) Console.Write("Bar");
+            else
+            if (square < 1) Console.Write("off");
+            else
+            {
+                boardsquare = 25 - square;
+                if (player == WHITE) boardsquare = square;
+                Console.Write($"{boardsquare}");
+                if (boardsquare < 10) Console.Write(" ");
+            }
         }
 
         /* ***********************************************************************
@@ -830,17 +890,17 @@ Out:            if (result == 0)
 
             if (human[player] == TRUE)
             {
-                Console.WriteLine($"EX {a} {b} {c} {d}, Movetype={movetype}\n");
+                //Console.WriteLine($"EX {a} {b} {c} {d}, Movetype={movetype}\n");
                 /* REMOVE THIS LINE AFTER DEBUGGING */
                 if ((movetype == 1 && equal(board, opboard, 25) == TRUE)
                    || (movetype == 2 && board[makingpoint] > 1)
                    || (movetype == 3))
                 {
-                    Console.WriteLine("accepted\n"); /* ANOTHER DEBUG FEATURE */
+                    //Console.WriteLine("accepted\n"); /* ANOTHER DEBUG FEATURE */
                     if (nooflegal == 0 || equal(board, opboard, 25) == FALSE)
                     {
                         nooflegal++;
-                        Console.WriteLine($"Noof={nooflegal}\n", nooflegal);
+                        //Console.WriteLine($"Noof={nooflegal}\n", nooflegal);
                         copy(opboard, board, 25);
                     }
                 }
@@ -1016,6 +1076,132 @@ Out:            if (result == 0)
         }
 
 
+        static int inputmove(int player, int dice1, int dice2)
+        {
+            int a, b, c, off, nulls;
+            string s;
+            bool valid = false;
+
+            copy(opboard, board, 25);
+            movetype = 1;
+
+            while (!valid)
+            { 
+                Console.WriteLine("\nYour moves:");
+                s = Console.ReadLine();
+
+                if ('0' > s[0] || s[0] > '9')
+                {
+                    valid = true;
+                    if (equalstring(s, "dice"))
+                        externaldice = !(externaldice == TRUE) ? TRUE : FALSE;
+
+                    else if (equalstring(s, "illegal"))
+                        movetype = 3;
+
+                    else if (equalstring(s, "quit") ||
+                        equalstring(s, "q"))
+                        return FALSE;
+
+                    else if (equalstring(s, "board"))
+                    {
+                        drawboard(board);
+                        writedice(player, dice1, dice2);
+                    }
+
+                    else if (equalstring(s, "debug"))
+                        debug = !(debug == TRUE) ? TRUE : FALSE;
+
+                    else if (equalstring(s, "terse"))
+                        terse = !(terse);
+
+                    else if (equalstring(s, "machine"))
+                    {
+                        human[WHITE] = FALSE;
+                        return TRUE;
+                    }
+
+                    else if (equalstring(s, "fast"))
+                        fast = !(fast);
+
+                    /*    else if (equalstring(s, "nulls"))
+                        {
+                            printf("\nNumber of nulls:\n");
+                            nulls = readn();
+                            UNRDCH();
+                        }*/
+
+                    else
+                    {
+                        Console.Write($"\nI've never heard of a {s} !\n");
+                        valid = false;
+                    }
+                }
+                else
+                {
+                    var numbers = parse(s);
+                    do
+                    {
+                        a = numbers.First(); numbers.RemoveAt(0);
+
+                        if (a < 0 || a > 25) goto AA;
+                        if (!numbers.Any() && equal(board, opboard, 25) == TRUE && movetype == 1)
+                        {
+                            movetype = 2;
+                            makingpoint = a;
+                            return TRUE;
+                        }
+                        if (opboard[a] == 0) goto AA;
+
+                        if (opboard[a] > 0)
+                        {
+                            c = 1;
+                            off = 0;
+                        }
+                        else
+                        {
+                            c = -1;
+                            off = 25;
+                            if (movetype != 3) goto AA;
+                        }
+
+                        b = numbers.First(); numbers.RemoveAt(0);
+
+
+                        if ((b <= 1 || b >= 25) && b != off) goto AA;
+                        if (b != off && c * opboard[b] < -1) goto AA;
+
+                        opboard[a] -= c;
+                        if (b != off)
+                        {
+                            if (opboard[b] == -c)
+                            {
+                                opboard[b] = 0;
+                                opboard[off] -= c;
+                            }
+                            opboard[b] += c;
+                        }
+                    }
+                    while (numbers.Any());
+
+                    if (movetype == 3)
+                    {
+                        copy(board, opboard, 25);
+                        //  if (sigma) sigma_drawpieces(board);
+                    }
+                    return TRUE;
+
+                    AA: Console.WriteLine("I can't make sense of that!");
+                }
+            }
+            return TRUE;
+        }
+
+        static List<int> parse(string s) {
+            var pieces = s.Split(' ');
+            return pieces.Select(x => int.Parse(x)).ToList();
+        }
+
         static bool equalstring(string a, string b)
         {
             return a.Equals(b);
@@ -1037,14 +1223,6 @@ Out:            if (result == 0)
             { a[i] = b[i]; }
         }
 
-
-        static void skipline()
-        {
-            while (terminator != '\n')
-            {
-                terminator = Console.ReadKey().KeyChar;
-            }
-        }
 
         static void skipspaces()
         {
