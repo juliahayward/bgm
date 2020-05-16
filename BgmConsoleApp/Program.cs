@@ -405,7 +405,7 @@ namespace BgmConsoleApp
                     typeofgame[i] = 1;
                 }
                 human[WHITE] = TRUE;
-                human[BLACK] = TRUE;
+                human[BLACK] = FALSE;
                 /*      if (sigma) sigma_drawpieces(board);       **/
                 turnnumber = 0;
 
@@ -545,7 +545,7 @@ Out:            if (result == 0)
                   do
                   {    if (!(inputmove(player, dice1, dice2)==TRUE))
                             return false;
-                 //      if (movetype == 3) goto A;*/
+                         if (movetype == 3) goto A;
                          allposs(player, dice1, dice2);
                          if (nooflegal == 0) Console.Write("\nImpossible move.\n");
                          if (nooflegal > 1) Console.Write("\nAmbiguous move.\n");
@@ -579,9 +579,10 @@ Out:            if (result == 0)
             if (!(human[player] == TRUE))
             {       i = typeofgame[player];
                 if (i != typeofgame[player + 2])
-                {       for (j=1; j<=30; j++) Console.WriteLine(list[j][i]);
+                {
+                    Console.WriteLine(list[i]);
                     Console.WriteLine("\n");
-        typeofgame[player + 2] = i;
+                    typeofgame[player + 2] = i;
                 }
             }
 
