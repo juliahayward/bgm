@@ -567,7 +567,7 @@ Out:            if (result == 0)
                  {     for (i=1; i<=4; i++)
                    {     makemove(player, dice1, allmoves[i]); }
                  }
-                 if (!(human[player] == TRUE)) Console.WriteLine("\nCurrent value = %d", bestscore);
+                 if (!(human[player] == TRUE)) Console.WriteLine($"\nCurrent value = {bestscore}");
             }
             else
             {    if (player == WHITE) Console.WriteLine("\n O");
@@ -579,7 +579,7 @@ Out:            if (result == 0)
             if (!(human[player] == TRUE))
             {       i = typeofgame[player];
                 if (i != typeofgame[player + 2])
-                {       for (j=1; j<=30; j++) Console.WriteLine("%s", list[j][i]);
+                {       for (j=1; j<=30; j++) Console.WriteLine(list[j][i]);
                     Console.WriteLine("\n");
         typeofgame[player + 2] = i;
                 }
@@ -910,7 +910,7 @@ Out:            if (result == 0)
             {
                 score = 0; //  posnevaluate(player);
                 nooflegal = 1;
-                Console.WriteLine("\nEx %d %d %d %d %d %d", a, b, c, d, gametype, score);
+                Console.WriteLine($"\nEx {a} {b} {c} {d} {gametype} {score}");
                 if (score <= bestscore) return;
                 typeofgame[player] = gametype;
                 bestscore = score;
@@ -978,7 +978,7 @@ Out:            if (result == 0)
 
         static void writedice(int player, int dice1, int dice2)
         {
-            Console.Write("\n%d:", turnnumber);
+            Console.Write($"\n{turnnumber}:", turnnumber);
             if (player == WHITE) Console.Write("White");
             if (player == BLACK) Console.Write("Black");
             Console.Write(" threw a ");
@@ -1009,7 +1009,7 @@ Out:            if (result == 0)
 
             if (a <= 0) return;
             if (a > 1) c = 'e';
-            Console.Write("\n%s %n m%sn on the bar\n", s, a, c);
+            Console.Write($"\n{s} {a} m{c}n on the bar\n", s, a, c);
         }
 
         static void half(int[] bd, int e)
@@ -1028,7 +1028,7 @@ Out:            if (result == 0)
                     { Console.Write("   "); }
                     else
                     {
-                        Console.Write("%d", k);
+                        Console.Write(k);
                         if (m > 0) Console.Write("W ");
                         if (m < 0) Console.Write("B ");
                     }
